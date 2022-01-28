@@ -1,7 +1,7 @@
 import "./App.css";
 import React, { useEffect, useState } from "react";
 import { ThemeProvider } from "theme-ui";
-import { Box, Text, Button, Link, Flex } from "rebass";
+import { Box, Text, Flex } from "rebass";
 import { Label, Input } from "@rebass/forms";
 import theme from "./theme";
 
@@ -108,7 +108,7 @@ function Editor() {
           if (i > 0) {
             name = `New Window ${i + 1}`;
           }
-          if (i == windows.length - 1) {
+          if (i === windows.length - 1) {
             name = "(new window)";
           }
           return (
@@ -164,7 +164,7 @@ function WindowEditor({ name, pt, win, onWindowEdit, multiURL }) {
       <hr />
       {win.urls.map((url, i) => {
         if (!multiURL && i > 0) {
-          return;
+          return null;
         }
         const empty = url === "";
         const id = name + i;
