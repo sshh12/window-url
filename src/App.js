@@ -8,6 +8,13 @@ import theme from "./theme";
 const BASE_URL = "http://192.168.0.129:3000";
 
 function App() {
+  useEffect(() => {
+    const query = window.location.search.substring(1);
+    if (!query) {
+      return;
+    }
+    handleURL(query);
+  }, []);
   return (
     <ThemeProvider theme={theme}>
       <div className="App">
@@ -22,6 +29,30 @@ function App() {
   );
 }
 
+function handleURL(urlSearch) {
+  const opts = JSON.parse(decodeURIComponent(urlSearch));
+  const wins = opts.windows;
+  if (wins.length === 0) {
+    return;
+  }
+  let openWindows = () => {
+    for (let wi = wins.length - 1; wi > 0; wi--) {
+      const wURL = generateURL([wins[wi]]);
+      window.open(
+        wURL,
+        `window-url-window-${wi}`,
+        `left=${wi * 10},top=${wi * 10}`
+      );
+    }
+    const curWin = wins[0];
+    for (let ui = curWin.urls.length - 1; ui > 0; ui--) {
+      window.open(curWin.urls[ui]);
+    }
+    window.open(curWin.urls[0], "_self");
+  };
+  openWindows();
+}
+
 function generateURL(wins) {
   let openWins = wins.filter((w) => !winEmpty(w));
   openWins = openWins.map((w) => {
@@ -33,7 +64,9 @@ function generateURL(wins) {
     return "";
   }
   console.log(JSON.stringify(openWins));
-  return BASE_URL + "?" + encodeURIComponent(JSON.stringify(openWins));
+  return (
+    BASE_URL + "?" + encodeURIComponent(JSON.stringify({ windows: openWins }))
+  );
 }
 
 function winEmpty(win) {
@@ -42,6 +75,7 @@ function winEmpty(win) {
 
 function Editor() {
   let [genURL, setGenURL] = useState("");
+  let [copied, setCopied] = useState(false);
   let [windows, setWindows] = useState([
     { urls: ["", ""] },
     { urls: ["", ""] },
@@ -55,6 +89,7 @@ function Editor() {
     }
     setWindows(newWins);
     setGenURL(generateURL(newWins));
+    setCopied(false);
   };
   return (
     <Box>
@@ -83,25 +118,37 @@ function Editor() {
               pt={i === 0 ? 0 : 30}
               name={name}
               onWindowEdit={(newWin) => onWindowEdit(i, newWin)}
+              multiURL={i === 0}
             />
           );
         })}
       </Box>
       <Box p={10}>
-        <Label htmlFor="gen">Generated URL</Label>
+        <Label htmlFor="gen">
+          Generated URL{" "}
+          {!copied ? <> (click below to copy)</> : <b> (copied)</b>}
+        </Label>
         <Input
           value={genURL}
           id="gen"
           name="gen"
           type="text"
           placeholder="(fill in the form above)"
+          onClick={(evt) => {
+            if (!genURL) {
+              return;
+            }
+            evt.target.select();
+            document.execCommand("copy");
+            setCopied(true);
+          }}
         />
       </Box>
     </Box>
   );
 }
 
-function WindowEditor({ name, pt, win, onWindowEdit }) {
+function WindowEditor({ name, pt, win, onWindowEdit, multiURL }) {
   const onURLEdit = (idx, newVal) => {
     let newWin = Object.assign({}, win);
     newWin.urls[idx] = newVal;
@@ -116,6 +163,9 @@ function WindowEditor({ name, pt, win, onWindowEdit }) {
       <Text>{name}</Text>
       <hr />
       {win.urls.map((url, i) => {
+        if (!multiURL && i > 0) {
+          return;
+        }
         const empty = url === "";
         const id = name + i;
         let label = "will open";
