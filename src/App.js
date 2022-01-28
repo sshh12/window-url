@@ -5,7 +5,7 @@ import { Box, Text, Flex } from "rebass";
 import { Label, Input } from "@rebass/forms";
 import theme from "./theme";
 
-const BASE_URL = "http://192.168.0.129:3000";
+const BASE_URL = "https://w.sshh.io";
 
 function App() {
   useEffect(() => {
